@@ -1,0 +1,72 @@
+from numpy import unique, argmax
+from tensorflow.keras.datasets.mnist import load_data
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPool2D, Dense, Flatten, Dropout
+from tensorflow.keras.utils import plot_model
+from matplotlib import pyplot as plt
+import numpy as np
+
+# Load dataset
+(x_train, y_train), (x_test, y_test) = load_data()
+
+# Reshape dataset (add channel dimension)
+x_train = x_train.reshape((x_train.shape[0], 28, 28, 1))
+x_test = x_test.reshape((x_test.shape[0], 28, 28, 1))
+
+# Normalize pixel values
+x_train = x_train.astype('float32') / 255
+x_test = x_test.astype('float32') / 255
+
+# Display some images
+fig = plt.figure(figsize=(5,3))
+for i in range(15):
+    ax = fig.add_subplot(2, 10, i+1, xticks=[], yticks=[])
+    ax.imshow(np.squeeze(x_train[i]), cmap='gray')
+    ax.set_title('Label: {}'.format(y_train[i]))
+plt.show()
+
+# Input shape
+img_shape = x_train.shape[1:]
+print("Input Shape:", img_shape)
+
+# Build CNN model
+model = Sequential()
+model.add(Conv2D(32, (3,3), activation='relu', kernel_initializer='he_uniform', input_shape=img_shape))
+model.add(MaxPool2D((2,2)))
+model.add(Flatten())
+model.add(Dense(100, activation='relu', kernel_initializer='he_uniform'))
+model.add(Dropout(0.5))
+model.add(Dense(10, activation='softmax'))
+
+# Model summary
+model.summary()
+
+# Save model diagram
+plot_model(model, 'model.jpg', show_shapes=True)
+
+# Compile model
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Train model
+history = model.fit(x_train, y_train,
+                    epochs=10,
+                    batch_size=128,
+                    verbose=2,
+                    validation_split=0.1)
+
+# Evaluate model
+loss, accuracy = model.evaluate(x_test, y_test, verbose=0)
+print("Accuracy: {:.2f}%".format(accuracy * 100))
+
+# Prediction example
+img = x_train[5]
+plt.imshow(np.squeeze(img), cmap='gray')
+plt.title("Actual: {}".format(y_train[5]))
+plt.show()
+
+img = img.reshape(1, 28, 28, 1)
+p = model.predict(img)
+print("Predicted:", argmax(p))
+
