@@ -1,0 +1,68 @@
+import tensorflow as tf
+from tensorflow.keras.datasets import boston_housing
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from sklearn import preprocessing
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Load dataset
+(train_x, train_y), (test_x, test_y) = boston_housing.load_data()
+
+# Print shapes
+print("Train shape:", train_x.shape)
+print("Test shape:", test_x.shape)
+print("Train output:", train_y.shape)
+print("Test output:", test_y.shape)
+
+# Normalize data
+train_x = preprocessing.normalize(train_x)
+test_x = preprocessing.normalize(test_x)
+
+# Build model
+model = Sequential()
+model.add(Dense(128, activation='relu', input_shape=(train_x.shape[1],)))
+model.add(Dense(64, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(1))
+
+# Compile model
+model.compile(optimizer='rmsprop',
+              loss='mse',
+              metrics=['mae'])
+
+# Train model
+history = model.fit(train_x, train_y,
+                    epochs=100,
+                    batch_size=1,
+                    validation_data=(test_x, test_y),
+                    verbose=1)
+
+# Evaluate model
+loss, mae = model.evaluate(test_x, test_y)
+print("Test Loss:", loss)
+print("Test MAE:", mae)
+
+# Prediction
+pred = model.predict(test_x[:5])
+print("Predictions:", pred)
+
+# ------------------ GRAPHS ------------------
+
+# Loss graph
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Loss vs Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('Loss (MSE)')
+plt.legend()
+plt.show()
+
+# MAE graph
+plt.plot(history.history['mae'], label='Training MAE')
+plt.plot(history.history['val_mae'], label='Validation MAE')
+plt.title('MAE vs Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('MAE')
+plt.legend()
+plt.show()
